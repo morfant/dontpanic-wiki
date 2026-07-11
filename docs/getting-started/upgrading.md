@@ -5,7 +5,7 @@ aliases:
 ---
 
 > [!note]
-> This is specifically a guide for upgrading your Quartz to a more recent update. If you are coming from Quartz 4 or Quartz 3, check out the [[getting-started/migrating|migration guide]] for more info.
+> This is specifically a guide for upgrading your Quartz to a more recent update. If you are coming from Quartz 4 or Quartz 3, check out the [[migrating|migration guide]] for more info.
 
 To fetch the latest Quartz updates, simply run
 
@@ -13,7 +13,7 @@ To fetch the latest Quartz updates, simply run
 npx quartz upgrade
 ```
 
-As Quartz uses [git](https://git-scm.com/) under the hood for versioning, upgrading effectively 'pulls' in the updates from the official Quartz GitHub repository. If you have local changes that might conflict with the updates, you may need to resolve these manually yourself (or, pull manually using `git pull origin upstream`).
+As Quartz uses [git](https://git-scm.com/) under the hood for versioning, upgrading effectively 'pulls' in the updates from the official Quartz GitHub repository. Merge conflicts in `quartz.lock.json` are handled automatically — Quartz backs up your lockfile before pulling and restores it afterward. For other files with local changes that conflict with the updates, you may need to resolve these manually yourself (or, pull manually using `git pull origin upstream`).
 
 > [!hint]
 > Quartz will try to cache your content before upgrading to try and prevent merge conflicts. If you get a conflict mid-merge, you can stop the merge and then run `npx quartz restore` to restore your content from the cache.
@@ -23,10 +23,10 @@ If you have the [GitHub desktop app](https://desktop.github.com/), this will aut
 To update your installed plugins separately, use:
 
 ```bash
-npx quartz update
+npx quartz plugin install --latest
 ```
 
-See the [[cli/update|CLI reference for update]] and [[cli/upgrade|CLI reference for upgrade]] for more details on available flags.
+See the [[upgrade|CLI reference for upgrade]] for more details on available flags.
 
 ### Cleaning Up Unused Plugins
 

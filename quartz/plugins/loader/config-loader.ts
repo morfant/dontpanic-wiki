@@ -8,6 +8,7 @@ import { PluginTypes } from "../types"
 import {
   PluginManifest,
   PluginJsonEntry,
+  PluginSource,
   QuartzPluginsJson,
   LayoutConfig,
   PluginLayoutDeclaration,
@@ -16,6 +17,7 @@ import {
 import {
   parsePluginSource,
   installPlugin,
+  installNativeDeps,
   getPluginEntryPoint,
   toFileUrl,
   isLocalSource,
@@ -49,8 +51,12 @@ function readPluginsJson(): QuartzPluginsJson | null {
   return JSON.parse(raw) as QuartzPluginsJson
 }
 
-function extractPluginName(source: string): string {
-  // Local file paths: use directory basename
+function extractPluginName(source: PluginSource): string {
+  if (typeof source === "object" && source !== null) {
+    if (source.name) return source.name
+    return extractPluginName(source.repo)
+  }
+
   if (isLocalSource(source)) {
     return path.basename(source.replace(/[\/]+$/, ""))
   }
@@ -68,6 +74,19 @@ function extractPluginName(source: string): string {
   return source
 }
 
+function formatSourceDisplay(source: PluginSource): string {
+  if (typeof source === "string") return source
+  const parts = [source.repo]
+  if (source.subdir) parts.push(`(subdir: ${source.subdir})`)
+  if (source.ref) parts.push(`(ref: ${source.ref})`)
+  return parts.join(" ")
+}
+
+function sourceKey(source: PluginSource): string {
+  if (typeof source === "string") return source
+  return JSON.stringify(source)
+}
+
 interface DependencyValidationResult {
   errors: string[]
   warnings: string[]
@@ -83,13 +102,13 @@ function validateDependencies(
   const sourceToEntry = new Map<string, PluginJsonEntry>()
   const nameToSource = new Map<string, string>()
   for (const entry of entries) {
-    sourceToEntry.set(entry.source, entry)
-    nameToSource.set(extractPluginName(entry.source), entry.source)
+    sourceToEntry.set(sourceKey(entry.source), entry)
+    nameToSource.set(extractPluginName(entry.source), sourceKey(entry.source))
   }
 
   for (const entry of entries) {
     if (!entry.enabled) continue
-    const manifest = manifests.get(entry.source)
+    const manifest = manifests.get(sourceKey(entry.source))
     if (!manifest?.dependencies?.length) continue
 
     const pluginName = manifest.displayName || extractPluginName(entry.source)
@@ -125,12 +144,11 @@ function validateDependencies(
     }
   }
 
-  // Circular dependency detection
   const graph = new Map<string, string[]>()
   for (const entry of entries) {
-    const manifest = manifests.get(entry.source)
+    const manifest = manifests.get(sourceKey(entry.source))
     if (manifest?.dependencies?.length) {
-      graph.set(entry.source, manifest.dependencies)
+      graph.set(sourceKey(entry.source), manifest.dependencies)
     }
   }
 
@@ -168,10 +186,10 @@ function validateDependencies(
   return { errors, warnings }
 }
 
-async function resolvePluginManifest(source: string): Promise<PluginManifest | null> {
+async function resolvePluginManifest(source: PluginSource): Promise<PluginManifest | null> {
   try {
     const gitSpec = parsePluginSource(source)
-    const entryPoint = getPluginEntryPoint(gitSpec.name, gitSpec.subdir)
+    const entryPoint = getPluginEntryPoint(gitSpec.name)
     const module = await import(toFileUrl(entryPoint))
     return module.manifest ?? null
   } catch {
@@ -179,7 +197,7 @@ async function resolvePluginManifest(source: string): Promise<PluginManifest | n
   }
 }
 
-async function readManifestFromPackageJson(source: string): Promise<PluginManifest | null> {
+async function readManifestFromPackageJson(source: PluginSource): Promise<PluginManifest | null> {
   try {
     const gitSpec = parsePluginSource(source)
     const pluginDir = path.join(process.cwd(), ".quartz", "plugins", gitSpec.name)
@@ -212,7 +230,7 @@ async function readManifestFromPackageJson(source: string): Promise<PluginManife
   }
 }
 
-async function getManifest(source: string): Promise<PluginManifest | null> {
+async function getManifest(source: PluginSource): Promise<PluginManifest | null> {
   // Try package.json quartz field first (preferred), then fall back to manifest.ts export
   return (await readManifestFromPackageJson(source)) ?? (await resolvePluginManifest(source))
 }
@@ -236,20 +254,39 @@ export async function loadQuartzConfig(
   const enabledEntries = json.plugins.filter((e) => e.enabled)
   const manifests = new Map<string, PluginManifest>()
 
-  // Ensure all plugins are installed and collect manifests
+  // Ensure all plugins are installed and collect native deps
+  const allNativeDeps = new Map<string, Map<string, string>>()
   for (const entry of enabledEntries) {
     try {
       const gitSpec = parsePluginSource(entry.source)
-      await installPlugin(gitSpec, { verbose: false })
-
-      const manifest = await getManifest(entry.source)
-      if (manifest) {
-        manifests.set(entry.source, manifest)
+      const result = await installPlugin(gitSpec, { verbose: false })
+      if (result.nativeDeps.size > 0) {
+        allNativeDeps.set(gitSpec.name, result.nativeDeps)
       }
     } catch (err) {
       console.error(
         styleText("red", `✗`) +
-          ` Failed to install plugin: ${styleText("yellow", entry.source)}\n` +
+          ` Failed to install plugin: ${styleText("yellow", formatSourceDisplay(entry.source))}\n` +
+          `  ${err instanceof Error ? err.message : String(err)}`,
+      )
+    }
+  }
+
+  if (allNativeDeps.size > 0) {
+    installNativeDeps(allNativeDeps, { verbose: false })
+  }
+
+  // Collect manifests (requires native deps to be installed first)
+  for (const entry of enabledEntries) {
+    try {
+      const manifest = await getManifest(entry.source)
+      if (manifest) {
+        manifests.set(sourceKey(entry.source), manifest)
+      }
+    } catch (err) {
+      console.error(
+        styleText("red", `✗`) +
+          ` Failed to load manifest: ${styleText("yellow", formatSourceDisplay(entry.source))}\n` +
           `  ${err instanceof Error ? err.message : String(err)}`,
       )
     }
@@ -276,7 +313,7 @@ export async function loadQuartzConfig(
   const pageTypes: { entry: PluginJsonEntry; manifest: PluginManifest | undefined }[] = []
 
   for (const entry of enabledEntries) {
-    const manifest = manifests.get(entry.source)
+    const manifest = manifests.get(sourceKey(entry.source))
     const category = manifest?.category
     // Resolve processing categories: for array categories (e.g. ["transformer", "pageType", "component"]),
     // push the plugin into ALL matching processing category buckets.
@@ -306,29 +343,36 @@ export async function loadQuartzConfig(
         // Always import the main entry point for component-only plugins.
         // Some plugins (e.g. Bases view registrations) rely on side effects
         // in their index module to register functionality.
-        const entryPoint = getPluginEntryPoint(gitSpec.name, gitSpec.subdir)
+        const entryPoint = getPluginEntryPoint(gitSpec.name)
         try {
-          await import(toFileUrl(entryPoint))
+          const module = await import(toFileUrl(entryPoint))
+          // If the module exports an init() function, call it with merged options
+          // so component-only plugins can receive user configuration from YAML.
+          if (typeof module.init === "function") {
+            const initOverrides = componentRegistry.getOptionOverrides(gitSpec.name)
+            const options = { ...manifest?.defaultOptions, ...entry.options, ...initOverrides }
+            await module.init(Object.keys(options).length > 0 ? options : undefined)
+          }
         } catch (e) {
           // Side-effect import failed — continue with manifest-based loading
         }
         if (manifest?.components && Object.keys(manifest.components).length > 0) {
-          await loadComponentsFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+          await loadComponentsFromPackage(gitSpec.name, manifest)
         }
         if (manifest?.frames && Object.keys(manifest.frames).length > 0) {
-          await loadFramesFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+          await loadFramesFromPackage(gitSpec.name, manifest)
         }
       } else {
-        const entryPoint = getPluginEntryPoint(gitSpec.name, gitSpec.subdir)
+        const entryPoint = getPluginEntryPoint(gitSpec.name)
         try {
           const module = await import(toFileUrl(entryPoint))
           const detected = detectCategoryFromModule(module)
           if (detected) {
             categoryMap[detected].push({ entry, manifest })
           } else if (manifest?.components && Object.keys(manifest.components).length > 0) {
-            await loadComponentsFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+            await loadComponentsFromPackage(gitSpec.name, manifest)
             if (manifest?.frames && Object.keys(manifest.frames).length > 0) {
-              await loadFramesFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+              await loadFramesFromPackage(gitSpec.name, manifest)
             }
           } else {
             console.warn(
@@ -340,10 +384,10 @@ export async function loadQuartzConfig(
           const hasComponents = manifest?.components && Object.keys(manifest.components).length > 0
           const hasFrames = manifest?.frames && Object.keys(manifest.frames).length > 0
           if (hasComponents) {
-            await loadComponentsFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+            await loadComponentsFromPackage(gitSpec.name, manifest)
           }
           if (hasFrames) {
-            await loadFramesFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+            await loadFramesFromPackage(gitSpec.name, manifest)
           }
           if (!hasComponents && !hasFrames) {
             console.warn(
@@ -380,25 +424,43 @@ export async function loadQuartzConfig(
     for (const { entry, manifest } of items) {
       try {
         const gitSpec = parsePluginSource(entry.source)
-        const entryPoint = getPluginEntryPoint(gitSpec.name, gitSpec.subdir)
+        const entryPoint = getPluginEntryPoint(gitSpec.name)
         const module = await import(toFileUrl(entryPoint))
         if (manifest?.components && Object.keys(manifest.components).length > 0) {
-          await loadComponentsFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+          await loadComponentsFromPackage(gitSpec.name, manifest)
         }
         if (manifest?.frames && Object.keys(manifest.frames).length > 0) {
-          await loadFramesFromPackage(gitSpec.name, manifest, gitSpec.subdir)
+          await loadFramesFromPackage(gitSpec.name, manifest)
         }
 
         const factory = findFactory(module, expectedCategory)
         if (!factory) {
           console.warn(
             styleText("yellow", `⚠`) +
-              ` Plugin "${extractPluginName(entry.source)}" has no factory function for category "${expectedCategory}". Skipping.`,
+              ` Plugin "${extractPluginName(entry.source)}" has no factory function for category "${expectedCategory}". ` +
+              `Ensure your plugin exports a default function, a "plugin" named export, or a single exported function.`,
           )
           continue
         }
-        const options = { ...manifest?.defaultOptions, ...entry.options }
-        instances.push(factory(Object.keys(options).length > 0 ? options : undefined))
+        const pluginOverrides = componentRegistry.getOptionOverrides(gitSpec.name)
+        const options = { ...manifest?.defaultOptions, ...entry.options, ...pluginOverrides }
+        const instance = factory(Object.keys(options).length > 0 ? options : undefined)
+        if (!instance || typeof instance !== "object") {
+          console.warn(
+            styleText("yellow", `⚠`) +
+              ` Plugin "${extractPluginName(entry.source)}" factory did not return a valid plugin instance. Skipping.`,
+          )
+          continue
+        }
+        if (!validateCategory(instance, expectedCategory)) {
+          console.warn(
+            styleText("yellow", `⚠`) +
+              ` Plugin "${extractPluginName(entry.source)}" declares category "${expectedCategory}" ` +
+              `but its factory returned an instance missing the required methods. Skipping.`,
+          )
+          continue
+        }
+        instances.push(instance)
       } catch (err) {
         console.error(
           styleText("red", `✗`) +
@@ -443,47 +505,70 @@ export async function loadQuartzConfig(
 
 type ProcessingCategory = "transformer" | "filter" | "emitter" | "pageType"
 
-function matchesCategory(factory: Function, expected: ProcessingCategory): boolean {
-  try {
-    const instance = factory()
-    if (!instance || typeof instance !== "object") return false
-    switch (expected) {
-      case "pageType":
-        return "match" in instance && "body" in instance && "layout" in instance
-      case "emitter":
-        return "emit" in instance
-      case "filter":
-        return "shouldPublish" in instance
-      case "transformer":
-        return (
-          "textTransform" in instance || "markdownPlugins" in instance || "htmlPlugins" in instance
-        )
-    }
-  } catch {
-    return false
+/**
+ * Validate that a plugin instance has the required methods for its declared category.
+ * Called AFTER real instantiation — never used to probe/discover category.
+ */
+function validateCategory(
+  instance: Record<string, unknown>,
+  expected: ProcessingCategory,
+): boolean {
+  switch (expected) {
+    case "pageType":
+      return "match" in instance && "body" in instance && "layout" in instance
+    case "emitter":
+      return "emit" in instance
+    case "filter":
+      return "shouldPublish" in instance
+    case "transformer":
+      return (
+        "textTransform" in instance || "markdownPlugins" in instance || "htmlPlugins" in instance
+      )
   }
 }
 
+/**
+ * Find the factory function from a plugin module by export convention.
+ * Prefers `default` export, then `plugin` named export, then the sole exported function.
+ * For multi-export modules with an expectedCategory, probes candidate functions to find
+ * the one matching the category shape.
+ */
 function findFactory(
   module: Record<string, unknown>,
-  expectedCategory: ProcessingCategory,
+  expectedCategory?: ProcessingCategory,
 ): Function | null {
-  if (
-    typeof module.default === "function" &&
-    matchesCategory(module.default as Function, expectedCategory)
-  ) {
+  if (typeof module.default === "function") {
     return module.default as Function
   }
-  if (
-    typeof module.plugin === "function" &&
-    matchesCategory(module.plugin as Function, expectedCategory)
-  ) {
+  if (typeof module.plugin === "function") {
     return module.plugin as Function
   }
 
-  for (const [, value] of Object.entries(module)) {
-    if (typeof value === "function" && matchesCategory(value as Function, expectedCategory)) {
-      return value as Function
+  const exportedFunctions = Object.entries(module).filter(
+    ([key, value]) => typeof value === "function" && !key.startsWith("__"),
+  )
+
+  if (exportedFunctions.length === 1) {
+    return exportedFunctions[0][1] as Function
+  }
+
+  // Multiple exports: probe candidates to find the one matching the expected category.
+  // This is the only code path that calls factory() for discovery, and only when
+  // there is no default/plugin export and multiple functions are exported.
+  if (exportedFunctions.length > 1 && expectedCategory) {
+    for (const [, fn] of exportedFunctions) {
+      try {
+        const instance = (fn as Function)()
+        if (
+          instance &&
+          typeof instance === "object" &&
+          validateCategory(instance, expectedCategory)
+        ) {
+          return fn as Function
+        }
+      } catch {
+        // This export doesn't work without args — skip it
+      }
     }
   }
 
@@ -494,10 +579,20 @@ function detectCategoryFromModule(module: unknown): ProcessingCategory | null {
   if (!module || typeof module !== "object") return null
   const mod = module as Record<string, unknown>
 
-  if (typeof mod.default === "function") {
-    // Try to instantiate and inspect
+  // Prefer static category marker on the factory if available
+  const factory = findFactory(mod as Record<string, unknown>)
+  if (factory && "quartzCategory" in factory) {
+    const cat = (factory as Record<string, unknown>).quartzCategory
+    if (cat === "transformer" || cat === "filter" || cat === "emitter" || cat === "pageType") {
+      return cat
+    }
+  }
+
+  // Fallback: try instantiating with no args and inspect the result.
+  // This may fail for plugins that do I/O or require options during construction.
+  if (typeof factory === "function") {
     try {
-      const instance = (mod.default as Function)()
+      const instance = factory()
       if (instance && typeof instance === "object") {
         if ("match" in instance && "body" in instance && "layout" in instance) return "pageType"
         if ("emit" in instance) return "emitter"
@@ -510,7 +605,8 @@ function detectCategoryFromModule(module: unknown): ProcessingCategory | null {
           return "transformer"
       }
     } catch {
-      // Couldn't instantiate, skip detection
+      // Factory requires arguments or does I/O — cannot detect category by probing.
+      // Plugin should declare category in package.json quartz.category field.
     }
   }
 
@@ -593,7 +689,8 @@ export async function loadQuartzLayout(layoutOverrides?: {
     if (footerReg) {
       if (typeof footerReg.component === "function" && !("displayName" in footerReg.component)) {
         // It's a constructor — use registry cache for consistent instances
-        const opts = { ...footerEntry.options }
+        const footerOverrides = componentRegistry.getOptionOverrides("footer")
+        const opts = { ...footerEntry.options, ...footerOverrides }
         footer = componentRegistry.instantiate(
           footerReg.component as QuartzComponentConstructor,
           Object.keys(opts).length > 0 ? opts : undefined,
@@ -657,7 +754,8 @@ function buildLayoutForEntries(
 
     // Look up component from registry
     const registered =
-      componentRegistry.get(name) ?? componentRegistry.get(`${entry.source}/${name}`)
+      componentRegistry.get(name) ??
+      componentRegistry.get(`${formatSourceDisplay(entry.source)}/${name}`)
     if (!registered) {
       // Try common naming patterns
       const pascalName = name
@@ -682,7 +780,8 @@ function buildLayoutForEntries(
     if (typeof reg.component === "function" && !("displayName" in reg.component)) {
       // It's a constructor — use registry cache to avoid duplicate instances
       // (and duplicate afterDOMLoaded scripts) across page-type layouts
-      const opts = { ...entry.options }
+      const tsOverrides = componentRegistry.getOptionOverrides(name)
+      const opts = { ...entry.options, ...tsOverrides }
       const optsArg = Object.keys(opts).length > 0 ? opts : undefined
       component = componentRegistry.instantiate(
         reg.component as QuartzComponentConstructor,
@@ -755,10 +854,13 @@ function resolveGroups(
         const groupConfig = groups[item.group]
         groupPriority.set(item.group, groupConfig?.priority ?? item.priority)
       }
-      groupedComponents.get(item.group)!.push({
-        component: item.component,
-        groupOptions: item.groupOptions,
-      })
+      const groupMembers = groupedComponents.get(item.group)
+      if (groupMembers) {
+        groupMembers.push({
+          component: item.component,
+          groupOptions: item.groupOptions,
+        })
+      }
     }
   }
 
@@ -774,7 +876,8 @@ function resolveGroups(
       if (processedGroups.has(item.group)) continue
       processedGroups.add(item.group)
 
-      const members = groupedComponents.get(item.group)!
+      const members = groupedComponents.get(item.group)
+      if (!members) continue
       const groupConfig = groups[item.group] ?? {}
 
       const flexComponents = members.map((m) => ({
@@ -797,7 +900,7 @@ function resolveGroups(
         gap: groupConfig.gap ?? "1rem",
       }) as QuartzComponent
 
-      entries.push({ priority: groupPriority.get(item.group)!, component: flexComponent })
+      entries.push({ priority: groupPriority.get(item.group) ?? 50, component: flexComponent })
     } else {
       entries.push({ priority: item.priority, component: item.component })
     }

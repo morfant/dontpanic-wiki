@@ -12,3 +12,4 @@ replit.nix
 .quartz/
 quartz/cli/tui/dist/
 .claude/scheduled_tasks.lock
+.fill-stubs.lock

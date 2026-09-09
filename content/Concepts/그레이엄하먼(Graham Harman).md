@@ -33,3 +33,6 @@ Levi Bryant, [[티모시모턴(Timothy Morton)]], Ian Bogost 등이 OOO 계열�
 - 실재 객체(Real Object) / 감각 객체(Sensual Object)
 - 실재 성질(Real Qualities) / 감각 성질(Sensual Qualities)
 - 이 네 극 사이의 긴장이 객체의 존재를 구성
+
+## 연결
+- [[하이퍼오브젝트(hyperobject)]] — 하먼의 철수 개념을 모턴이 지구온난화 같은 거대 객체에 적용한 생태 버전 <!-- ai-linked 2026-09-09 -->

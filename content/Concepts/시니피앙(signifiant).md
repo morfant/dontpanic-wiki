@@ -3,6 +3,7 @@ type: concept
 tags: [기호학, 소쉬르, 라캉, 구조주의, 언어]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://ko.wikipedia.org/wiki/기표와_기의
   - https://www.cs.princeton.edu/~chazelle/courses/BIB/semio2.htm

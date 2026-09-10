@@ -3,6 +3,7 @@ type: concept
 tags: [관념, 이데아, 인식론, 경험론, 기호학, 개념미술, 미술이론, 표상]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/Idea
   - https://plato.stanford.edu/entries/locke/

@@ -3,6 +3,7 @@ type: concept
 tags: [기호학, 소쉬르, 라캉, 바르트, 데리다, 의미]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://ko.wikipedia.org/wiki/%EA%B8%B0%ED%91%9C%EC%99%80_%EA%B8%B0%EC%9D%98
   - https://www.cs.princeton.edu/~chazelle/courses/BIB/semio2.htm

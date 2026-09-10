@@ -3,6 +3,7 @@ type: concept
 tags: [장소, 공간, 아리스토텔레스, 현상학, 수사학, 건축, 인문지리학]
 ai-generated: true
 ai-generated-date: 2026-09-10
+isRead: false
 sources:
   - https://plato.stanford.edu/entries/aristotle-mathematics/supplement2.html
   - http://classics.mit.edu/Aristotle/physics.4.iv.html

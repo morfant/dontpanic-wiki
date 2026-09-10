@@ -3,6 +3,7 @@ type: concept
 tags: [기호학, 영화이론, 롤랑바르트, 이미지, 사진]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://www.artforum.com/features/the-third-meaning-notes-on-some-of-eisensteins-stills-210328/
   - https://theory.theasintheas.org/wp-content/uploads/2013/03/Barthes_Third_Meaning_Image_Music_Text.pdf

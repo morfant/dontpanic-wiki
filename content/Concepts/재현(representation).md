@@ -3,6 +3,7 @@ type: concept
 tags: [재현, 표상, 미학, 기호학, 미메시스, 이미지, 모더니즘, 포스트모더니즘]
 ai-generated: true
 ai-generated-date: 2026-07-23
+isRead: false
 sources:
   - https://ko.wikipedia.org/wiki/재현_(예술)
   - https://www.britannica.com/art/mimesis

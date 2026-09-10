@@ -3,6 +3,7 @@ type: concept
 tags: [하이퍼오브젝트, 티모시모턴, 객체지향존재론, 인류세, 생태미학]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/Timothy_Morton
   - https://www.upress.umn.edu/9780816689231/hyperobjects/

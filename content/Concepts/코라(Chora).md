@@ -3,6 +3,7 @@ type: concept
 tags: [공간, 장소, 플라톤, 크리스테바, 데리다, 건축, 지리학]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/Kh%C3%B4ra
   - http://www.readersnews.com/news/articleView.html?idxno=45679

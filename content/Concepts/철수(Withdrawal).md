@@ -3,6 +3,7 @@ type: concept
 tags: [객체지향존재론, 하먼, 하이데거, 사변적실재론, 미학]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://deontologistics.co/wp-content/uploads/2021/02/object_oriented_ontology_dictionary_entr.pdf
   - https://ndpr.nd.edu/reviews/art-and-objects/

@@ -3,6 +3,7 @@ type: concept
 tags: [보드리야르, 시뮬라크르, 시뮬라시옹, 하이퍼리얼, 재현, 포스트모더니즘]
 ai-generated: true
 ai-generated-date: 2026-07-23
+isRead: false
 sources:
   - https://web.stanford.edu/class/history34q/readings/Baudrillard/Baudrillard_Simulacra.html
   - https://chaosbunker.com/blog/the-territory-and-the-map-baudrillard-and-the-rise-of-the-simulated-world/

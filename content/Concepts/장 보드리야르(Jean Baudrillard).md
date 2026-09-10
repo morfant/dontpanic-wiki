@@ -3,6 +3,7 @@ type: concept
 tags: [보드리야르, 포스트모더니즘, 미디어이론, 시뮬라시옹, 소비사회, 기호학]
 ai-generated: true
 ai-generated-date: 2026-07-23
+isRead: false
 sources:
   - https://iep.utm.edu/baudrillard/
   - https://plato.stanford.edu/entries/baudrillard/

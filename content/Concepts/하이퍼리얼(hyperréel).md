@@ -3,6 +3,7 @@ type: concept
 tags: [보드리야르, 하이퍼리얼, 과실재, 시뮬라시옹, 시뮬라크르, 포스트모던, 미디어이론]
 ai-generated: true
 ai-generated-date: 2026-07-23
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/Hyperreality
   - https://en.wikipedia.org/wiki/Simulacra_and_Simulation

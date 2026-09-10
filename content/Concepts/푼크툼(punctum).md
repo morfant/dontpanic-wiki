@@ -3,6 +3,7 @@ type: concept
 tags: [사진이론, 롤랑바르트, 미디어이론, 기호학, 이미지론]
 ai-generated: true
 ai-generated-date: 2026-07-11
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/Camera_Lucida_(book)
   - https://aestheticsofphotography.com/camera-lucida-roland-barthes/

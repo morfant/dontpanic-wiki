@@ -3,6 +3,7 @@ type: concept
 tags: [프램턴, 사진이론, 조각, 편집, 신유물론, 매체론]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://monoskop.org/File:Frampton_Hollis_Circles_of_Confusion_Film_Photography_Video_Texts_1968-1980.pdf
   - https://direct.mit.edu/books/book/3848/On-the-Camera-Arts-and-Consecutive-MattersThe

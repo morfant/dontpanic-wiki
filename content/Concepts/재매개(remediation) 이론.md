@@ -3,6 +3,7 @@ type: concept
 tags: [미디어이론, 뉴미디어, 재매개, 볼터, 그루신, 맥루언, 미디어계보학]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://ko.wikipedia.org/wiki/재매개
   - https://www.commbooks.com/재매개-뉴미디어의-계보학/

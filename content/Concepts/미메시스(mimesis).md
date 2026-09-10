@@ -3,6 +3,7 @@ type: concept
 tags: [미메시스, 재현, 미학, 플라톤, 아리스토텔레스, 모방, 시학]
 ai-generated: true
 ai-generated-date: 2026-07-23
+isRead: false
 sources:
   - https://ko.wikipedia.org/wiki/미메시스
   - https://en.wikipedia.org/wiki/Mimesis

@@ -3,6 +3,7 @@ type: concept
 tags: [현상학, 미학, 과학철학, 후설, 재현]
 ai-generated: true
 ai-generated-date: 2026-09-09
+isRead: false
 sources:
   - https://en.wikipedia.org/wiki/The_Crisis_of_European_Sciences_and_Transcendental_Phenomenology
   - https://plato.stanford.edu/entries/models-science/

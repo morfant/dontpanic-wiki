@@ -75,6 +75,9 @@ for f in "$IMG_DST"/*(N); do
 done
 rm -f "$refs"
 
+# 2.5) index.md의 '오늘의 개념' 블록 갱신 (날짜 기준, 하루 1회만 실제 변경됨)
+python3 "$REPO/scripts/daily-concept.py" 2>&1 | while IFS= read -r line; do log "$line"; done
+
 # 3) 변경 감지 후 commit/push
 cd "$REPO" || exit 1
 if [ -z "$(git status --porcelain -- content/)" ]; then

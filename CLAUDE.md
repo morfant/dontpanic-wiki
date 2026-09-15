@@ -32,6 +32,7 @@ Obsidian 볼트 `DontPanic`의 **Concepts 폴더**를 Quartz 5 기반 위키로 
 - 코어 타입/포맷 검사(코어를 건드렸을 때만): `npm run check`, 테스트 `npm test`
 - 빈 노트 채우기: `/fill-stubs` skill (`.claude/skills/fill-stubs/`) — 웹 조사로 볼트 원본에 직접 작성(`ai-generated: true`), 밀접한 기존 노트의 `## 연결` 섹션에 역방향 링크 추가(`<!-- ai-linked 날짜 -->` 주석). 인자: `--auto`(헤드리스), `--list`(목록만), `--no-backlink`
 - 스텁 자동 채우기: launchd `com.giy.obsidian-wiki-fill-stubs`가 매일 04:30에 `scripts/fill-stubs.sh` 실행 → 스텁이 있으면 `claude -p "/fill-stubs --auto"`(acceptEdits, `--add-dir` 볼트) 로 최대 5개 처리. 로그: `~/Library/Logs/obsidian-wiki-fill-stubs.log`. 즉시 실행: `launchctl kickstart gui/$UID/com.giy.obsidian-wiki-fill-stubs`, 목록만: `zsh scripts/fill-stubs.sh --list`
+- 오늘의 개념: `scripts/daily-concept.py`가 sync 때마다 `content/index.md`의 `<!-- daily-concept -->` 마커 블록을 갱신 (날짜+파일명 해시로 하루 1개, `draft`/`isRead: true`/본문 200자 미만 제외, 미독 개수 표시). 읽은 노트는 볼트에서 `isRead: true`로 표시하면 후보에서 빠짐. 마커 밖의 index.md는 자유롭게 편집 가능.
 - 공개 폴더 추가: `scripts/sync.sh` 상단 `SYNC_FOLDERS` 배열에 폴더명 추가
 - 노트 단위 비공개: 프론트매터에 `draft: true` (remove-draft 플러그인)
 

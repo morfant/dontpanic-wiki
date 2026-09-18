@@ -5,11 +5,11 @@ title: DontPanic
 미디어이론·인문학 개념들을 정리하는 개인 위키입니다. Obsidian 볼트에서 자동으로 동기화됩니다.
 
 <!-- daily-concept:start -->
-## 오늘의 개념 · 2026-09-18
+## 오늘의 개념 · 2026-09-19
 
-### [[Concepts/브뤼노 라투르(Bruno Latour)|브뤼노 라투르(Bruno Latour)]]
+### [[Concepts/아비투스(habitus)|아비투스(habitus)]]
 
-> 1980년대 초 파리 광업학교(École des Mines)에서 Michel Callon, Madeleine Akrich 등과 함께 ANT(행위자네트워크이론)을 개발했습니다. [Wikipedia](https://en.wikipedia.org/wiki/Actor%E2%80%93networ…
+> 부르디외의 핵심 개념으로, 몸에 새겨진 성향 체계입니다. 특정한 사회적 위치에서 살아오며 반복적으로 겪은 경험이 지각·판단·행동의 습관으로 굳어져, 의식하지 않아도 자동으로 작동하는 상태를 말합니다.
 
 아직 읽지 않은 개념 118개가 남아 있습니다. 읽었으면 옵시디언에서 `isRead`를 켜 주세요.
 <!-- daily-concept:end -->

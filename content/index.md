@@ -5,11 +5,11 @@ title: DontPanic
 미디어이론·인문학 개념들을 정리하는 개인 위키입니다. Obsidian 볼트에서 자동으로 동기화됩니다.
 
 <!-- daily-concept:start -->
-## 오늘의 개념 · 2026-09-17
+## 오늘의 개념 · 2026-09-18
 
-### [[Concepts/푼크툼(punctum)|푼크툼(punctum)]]
+### [[Concepts/브뤼노 라투르(Bruno Latour)|브뤼노 라투르(Bruno Latour)]]
 
-> 푼크툼(punctum)은 롤랑 바르트가 『카메라 루시다』(La Chambre claire, 1980)에서 제시한 개념으로, 사진 속의 어떤 우연한 세부가 보는 이를 개인적으로 "찌르고, 상처 입히고, 사로잡는" 경험을 가리킨다. 라틴어로 '찔린 자국, 뾰족한 도구가 남긴 상처'를 뜻하는…
+> 1980년대 초 파리 광업학교(École des Mines)에서 Michel Callon, Madeleine Akrich 등과 함께 ANT(행위자네트워크이론)을 개발했습니다. [Wikipedia](https://en.wikipedia.org/wiki/Actor%E2%80%93networ…
 
 아직 읽지 않은 개념 118개가 남아 있습니다. 읽었으면 옵시디언에서 `isRead`를 켜 주세요.
 <!-- daily-concept:end -->

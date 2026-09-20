@@ -5,7 +5,7 @@ title: DontPanic
 미디어이론·인문학 개념들을 정리하는 개인 위키입니다. Obsidian 볼트에서 자동으로 동기화됩니다.
 
 <!-- daily-concept:start -->
-## 오늘의 개념 · 2026-09-19
+## 오늘의 개념 · 2026-09-20
 
 ### [[Concepts/아비투스(habitus)|아비투스(habitus)]]
 

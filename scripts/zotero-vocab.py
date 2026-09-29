@@ -13,7 +13,7 @@ from pathlib import Path
 COLOR = "#2ea8e5"  # Zotero 기본 팔레트의 파랑
 DB = Path.home() / "Zotero/zotero.sqlite"
 VAULT = Path.home() / "Library/Mobile Documents/iCloud~md~obsidian/Documents/DontPanic"
-NOTE = VAULT / "영단어장 (2010-2012).md"
+NOTE = VAULT / "영단어장.md"
 STATE = VAULT / ".zotero-vocab-seen.json"
 DRY = "--dry-run" in sys.argv
 

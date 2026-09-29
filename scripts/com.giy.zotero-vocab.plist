@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.giy.zotero-vocab</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-c</string>
+        <string>/usr/bin/python3 /Users/giy/Projects/obsidian_wiki/scripts/zotero-vocab.py</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/giy/.local/bin:/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/giy</string>
+    </dict>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>LowPriorityBackgroundIO</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/giy/Library/Logs/zotero-vocab.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/giy/Library/Logs/zotero-vocab.log</string>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- 아이맥에서 실행. 스크립트는 레포 scripts/daily-read.py 를 아래 경로로 scp 해서 씀 -->
+<dict>
+    <key>Label</key>
+    <string>com.giy.obsidian-daily-read</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/giy/Library/Application Support/obsidian-daily-read/daily-read.py</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/giy/Library/Logs/obsidian-daily-read.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/giy/Library/Logs/obsidian-daily-read.log</string>
+</dict>
+</plist>

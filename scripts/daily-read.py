@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""볼트 루트의 '오늘 읽기.md'를 만들고 아이폰으로 iMessage 알림을 보낸다. 아이맥 launchd가 매일 아침 실행.
+"""볼트 루트의 '오늘 읽기.md'를 만들고 미리 알림으로 아이폰에 알린다. 아이맥 launchd가 매일 아침 실행.
 
 - 읽을거리: 볼트 수업노트/**/*_정리.md 의 '## ' 섹션 하나하나 (찾아볼 것·공지·연결 고리 제외)
 - 하루 분량: 새 섹션 1개 + 복습할 때가 된 섹션 1개(있으면)
 - 읽음 처리: '오늘 읽기.md'의 '- [ ] 읽음' 을 체크하면 다음 실행 때 반영.
   체크한 섹션은 1·3·7·21·60일 뒤에 다시 나오고, 체크 안 한 섹션은 다음 날 그대로 다시 나온다.
-- 상태와 알림 받을 iMessage 주소는 레포 밖(STATE_DIR)에 둔다. 레포가 공개이므로.
-  STATE_DIR/imessage-handle 파일에 주소 한 줄(내 주소로 보내면 아이폰에 온다). 없으면 노트만 만든다.
+- 알림: 기본 목록에 '오늘 읽기 MM/DD 📖' 미리 알림을 1분 뒤 알람으로 만들고, 안 끝난 이전 것은 완료 처리.
+  iCloud로 아이폰에 동기화돼 잠금 화면 알림이 뜬다.
+- 내게 보내는 iMessage는 아이폰에 알림이 안 떠서 기록용. STATE_DIR/imessage-handle 파일이 있을 때만 보낸다.
+- 상태와 수신 주소는 레포 밖(STATE_DIR)에 둔다. 레포가 공개이므로.
 - iCloud 파일명은 기기에 따라 NFD로 올 수 있어 경로·id를 NFC로 맞춘다.
 
   --dry-run  노트를 쓰지 않고 오늘 고를 내용만 출력 (상태도 안 바꿈)
@@ -101,13 +103,31 @@ def render(chosen, state, today):
     return "\n".join(lines).rstrip() + "\n"
 
 
+REMIND_SCRIPT = '''on run argv
+tell application "Reminders" to launch
+delay 5  -- 꺼져 있던 앱이 뜨는 중이면 -600(앱이 실행 중이 아님)이 난다
+tell application "Reminders"
+  set L to default list
+  repeat with r in (reminders of L whose completed is false and name starts with "오늘 읽기 ")
+    set completed of r to true
+  end repeat
+  set d to (current date) + 60
+  make new reminder at end of L with properties {name:(item 1 of argv), body:(item 2 of argv), due date:d, remind me date:d}
+end tell
+end run'''
+
+
 def send(chosen, today):
-    if not HANDLE.exists() or not chosen:
+    if not chosen:
         return
-    handle = HANDLE.read_text(encoding="utf-8").strip()
     url = "obsidian://open?" + urllib.parse.urlencode(
         {"vault": VAULT.name, "file": OUT.stem}, quote_via=urllib.parse.quote)
     titles = "\n".join(f"· {h} ({stem.replace('_정리', '')})" for _, stem, h, _ in chosen)
+    title = f"오늘 읽기 {today.strftime('%m/%d')} 📖"
+    subprocess.run(["osascript", "-e", REMIND_SCRIPT, title, f"{titles}\n{url}"], check=True, timeout=120)
+    if not HANDLE.exists():
+        return
+    handle = HANDLE.read_text(encoding="utf-8").strip()
     msg = f"📖 오늘 읽기 {today.strftime('%m/%d')}\n{titles}\n{url}"
     script = '''on run argv
 tell application "Messages"

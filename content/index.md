@@ -5,11 +5,11 @@ title: DontPanic
 미디어이론·인문학 개념들을 정리하는 개인 위키입니다. Obsidian 볼트에서 자동으로 동기화됩니다.
 
 <!-- daily-concept:start -->
-## 오늘의 개념 · 2026-10-09
+## 오늘의 개념 · 2026-10-10
 
-### [[Concepts/브라켓|브라켓]]
+### [[Concepts/흰 개미 예술 흰 코끼리 예술|흰 개미 예술 흰 코끼리 예술]]
 
-> 뻗어나간 지붕의 무게를 버티기 위한 건축물의 외벽과 지붕 안쪽을 이어주는 곡선의 구조물
+> _Film Culture_ 27호(1962–63년 겨울)에 처음 실렸고, 이후 파버의 비평 모음집 _Negative Space_ (1971, Da Capo Press)에 재수록되었습니다. Scott MacKenzie 편 _Film Manifestos and Global Cinema Cu…
 
 아직 읽지 않은 개념 133개가 남아 있습니다. 읽었으면 옵시디언에서 `isRead`를 켜 주세요.
 <!-- daily-concept:end -->

@@ -4,6 +4,7 @@
 - 읽을거리: 볼트 수업노트/**/*_정리.md 와 'N강 YYMMDD …' 강의노트의 '## ' 섹션 하나하나
   (찾아볼 것·공지·연결 고리·열린 질문 제외)
 - 하루 분량: 새 섹션 1개 + 복습할 때가 된 섹션 1개(있으면)
+- 새 섹션 순서: 어제 나온 섹션과 [[링크]]를 많이 공유하는 것부터(과목 무관). 이을 게 없으면 최근 수업부터
 - 읽음 처리: '오늘 읽기.md'의 '- [ ] 읽음' 을 체크하면 다음 실행 때 반영.
   체크한 섹션은 1·3·7·21·60일 뒤에 다시 나오고, 체크 안 한 섹션은 다음 날 그대로 다시 나온다.
 - 알림: 기본 목록에 '오늘 읽기 MM/DD 📖' 미리 알림을 1분 뒤 알람으로 만들고, 안 끝난 이전 것은 완료 처리.
@@ -28,6 +29,7 @@ INTERVALS = [1, 3, 7, 21, 60]  # 읽음 체크 n번째 이후 다음 복습까�
 SKIP_HEADINGS = ("찾아볼 것", "공지", "오늘 수업의 연결 고리", "0. 발제 안내", "0. 읽기 안내", "2. 과제와 평가", "3. 읽기 목록",
                  "열린 질문", "다음 강의로 이어지는 실")
 CHECK_RE = re.compile(r"^- \[( |x|X)\] 읽음 <!-- id:(.+?) -->$", re.M)
+LINK_RE = re.compile(r"(?<!!)\[\[([^\]|#]+)")  # ![[그림]] 임베드는 빼고 개념 링크만
 DATE_RE = re.compile(r"(\d{6})_정리$|^\d+강 (\d{6}) ")  # 수업 정리본 · 강의노트(커뮤니케이션디자인사)
 
 
@@ -78,11 +80,30 @@ def apply_checks(state, today):
     return unread
 
 
+def links(body):
+    return {unicodedata.normalize("NFC", x.strip()) for x in LINK_RE.findall(body)
+            if not re.search(r"\.(jpe?g|png|gif|webp|pdf)$", x.strip(), re.I)}
+
+
+def next_new(secs, state):
+    """아직 안 읽은 섹션 중 어제 나온 것(없으면 가장 최근 읽은 것)과 링크가 가장 많이 겹치는 것. 동점·무연결은 최근 수업 순."""
+    by_id = {s[0]: s for s in secs}
+    last = max((it.get("last", "") for it in state["items"].values()), default="")
+    anchor_ids = set(state.get("shown", [])) | {i for i, it in state["items"].items() if last and it.get("last") == last}
+    anchor = set().union(*(links(by_id[i][3]) for i in anchor_ids if i in by_id))
+    df = {}  # 여러 섹션에 흔한 링크(광고 등)는 덜 친다
+    for s in secs:
+        for k in links(s[3]):
+            df[k] = df.get(k, 0) + 1
+    fresh = [s for s in secs if s[0] not in state["items"]]
+    return max(fresh, key=lambda s: sum(1 / df[k] for k in links(s[3]) & anchor), default=None)  # 동점이면 앞(최근)
+
+
 def pick(secs, state, unread, today):
     by_id = {s[0]: s for s in secs}
     chosen = [by_id[i] for i in unread if i in by_id]  # 어제 못 읽은 것은 그대로 다시
     if all(s[0] in state["items"] for s in chosen):
-        new = next((s for s in secs if s[0] not in state["items"]), None)
+        new = next_new(secs, state)
         if new:
             chosen.append(new)
     if not any(s[0] in state["items"] for s in chosen):

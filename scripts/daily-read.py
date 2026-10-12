@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """볼트 루트의 '오늘 읽기.md'를 만들고 미리 알림으로 아이폰에 알린다. 아이맥 launchd가 매일 아침 실행.
 
-- 읽을거리: 볼트 수업노트/**/*_정리.md 의 '## ' 섹션 하나하나 (찾아볼 것·공지·연결 고리 제외)
+- 읽을거리: 볼트 수업노트/**/*_정리.md 와 'N강 YYMMDD …' 강의노트의 '## ' 섹션 하나하나
+  (찾아볼 것·공지·연결 고리·열린 질문 제외)
 - 하루 분량: 새 섹션 1개 + 복습할 때가 된 섹션 1개(있으면)
 - 읽음 처리: '오늘 읽기.md'의 '- [ ] 읽음' 을 체크하면 다음 실행 때 반영.
   체크한 섹션은 1·3·7·21·60일 뒤에 다시 나오고, 체크 안 한 섹션은 다음 날 그대로 다시 나온다.
@@ -24,16 +25,18 @@ STATE_DIR = pathlib.Path.home() / "Library/Application Support/obsidian-daily-re
 STATE = STATE_DIR / "state.json"
 HANDLE = STATE_DIR / "imessage-handle"
 INTERVALS = [1, 3, 7, 21, 60]  # 읽음 체크 n번째 이후 다음 복습까지 일수
-SKIP_HEADINGS = ("찾아볼 것", "공지", "오늘 수업의 연결 고리", "0. 발제 안내", "0. 읽기 안내", "2. 과제와 평가", "3. 읽기 목록")
+SKIP_HEADINGS = ("찾아볼 것", "공지", "오늘 수업의 연결 고리", "0. 발제 안내", "0. 읽기 안내", "2. 과제와 평가", "3. 읽기 목록",
+                 "열린 질문", "다음 강의로 이어지는 실")
 CHECK_RE = re.compile(r"^- \[( |x|X)\] 읽음 <!-- id:(.+?) -->$", re.M)
-DATE_RE = re.compile(r"(\d{6})_정리$")
+DATE_RE = re.compile(r"(\d{6})_정리$|^\d+강 (\d{6}) ")  # 수업 정리본 · 강의노트(커뮤니케이션디자인사)
 
 
 def sections():
     """(id, 노트 stem, 제목, 본문) 목록. 최근 수업이 먼저, 노트 안에서는 위에서부터."""
     nfc = lambda x: unicodedata.normalize("NFC", x)
-    notes = [p for p in NOTES.rglob("*.md") if DATE_RE.search(nfc(p.stem))]
-    notes.sort(key=lambda p: DATE_RE.search(nfc(p.stem)).group(1), reverse=True)
+    date = lambda p: next(g for g in DATE_RE.search(nfc(p.stem)).groups() if g)
+    notes = sorted((p for p in NOTES.rglob("*.md") if DATE_RE.search(nfc(p.stem))), key=lambda p: nfc(p.stem))
+    notes.sort(key=date, reverse=True)  # 같은 날짜면 이름순(1강→2강)
     out = []
     for p in notes:
         stem = nfc(p.stem)

@@ -5,7 +5,8 @@
   (찾아볼 것·공지·연결 고리·열린 질문 제외)
 - 하루 분량: 새 섹션 1개 + 복습할 때가 된 섹션 1개(있으면)
 - 새 섹션 순서: 어제 나온 섹션과 [[링크]]를 많이 공유하는 것부터(과목 무관). 이을 게 없으면 최근 수업부터
-- 읽음 처리: '오늘 읽기.md'의 '- [ ] 읽음' 을 체크하면 다음 실행 때 반영.
+- 읽음 처리: '오늘 읽기.md'의 '- [ ] 읽음' 을 체크하거나, 그날 미리 알림을 완료로 체크하면(=그날 것 모두 읽음) 다음 실행 때 반영.
+  아이맥 iCloud 문서 동기화가 늦거나 멈출 때가 있어 미리 알림(동기화가 빠름)을 함께 본다.
   체크한 섹션은 1·3·7·21·60일 뒤에 다시 나오고, 체크 안 한 섹션은 다음 날 그대로 다시 나온다.
 - 알림: 기본 목록에 '오늘 읽기 MM/DD 📖' 미리 알림을 1분 뒤 알람으로 만들고, 안 끝난 이전 것은 완료 처리.
   iCloud로 아이폰에 동기화돼 잠금 화면 알림이 뜬다.
@@ -16,6 +17,7 @@
   --dry-run  노트를 쓰지 않고 오늘 고를 내용만 출력 (상태도 안 바꿈)
   --no-send  노트는 쓰되 알림은 보내지 않음
   --resend   오늘 이미 실행했으면 같은 내용으로 알림만 다시 보냄
+  --check-reminder  지난번 미리 알림을 완료했는지만 출력 (launchd로 돌려 확인)
 """
 import datetime, json, pathlib, re, subprocess, sys, time, unicodedata, urllib.parse
 
@@ -61,15 +63,12 @@ def load_state():
         return {"items": {}, "shown": []}
 
 
-def apply_checks(state, today):
-    """어제 노트의 체크 상태를 반영. 체크 안 된 id 목록을 돌려준다."""
-    if not OUT.exists():
-        return []
+def apply_checks(state, today, all_read=False):
+    """어제 노트의 체크 상태를 반영(all_read면 어제 것 모두 읽음). 체크 안 된 id 목록을 돌려준다."""
+    marks = {sid: m for m, sid in CHECK_RE.findall(OUT.read_text(encoding="utf-8"))} if OUT.exists() else {}
     unread = []
-    for mark, sid in CHECK_RE.findall(OUT.read_text(encoding="utf-8")):
-        if sid not in state["shown"]:
-            continue
-        if mark.strip():
+    for sid in state.get("shown", []):
+        if all_read or marks.get(sid, " ").strip():
             it = state["items"].setdefault(sid, {"stage": 0})
             gap = INTERVALS[min(it["stage"], len(INTERVALS) - 1)]
             it["stage"] += 1
@@ -140,6 +139,34 @@ def render(chosen, state, today):
     return "\n".join(lines).rstrip() + "\n"
 
 
+DONE_SCRIPT = '''on run argv
+tell application "Reminders" to launch
+delay 5
+tell application "Reminders"
+  set best to missing value
+  repeat with r in (reminders of default list whose name is (item 1 of argv))
+    if best is missing value then
+      set best to contents of r
+    else if creation date of r > creation date of best then
+      set best to contents of r
+    end if
+  end repeat
+  if best is missing value then return "none"
+  return (completed of best) as string
+end tell
+end run'''
+
+
+def reminder_done(state):
+    """지난번 보낸 '오늘 읽기 MM/DD 📖' 중 가장 최근 것을 사용자가 완료했는가."""
+    if not state.get("date") or not state.get("shown"):
+        return False
+    title = f"오늘 읽기 {datetime.date.fromisoformat(state['date']).strftime('%m/%d')} 📖"
+    r = subprocess.run(["osascript", "-e", DONE_SCRIPT, title], capture_output=True, text=True, timeout=120)
+    print("reminder", title, r.stdout.strip() or r.stderr.strip())
+    return r.stdout.strip() == "true"
+
+
 REMIND_SCRIPT = '''on run argv
 tell application "Reminders" to launch
 delay 5  -- 꺼져 있던 앱이 뜨는 중이면 -600(앱이 실행 중이 아님)이 난다
@@ -180,6 +207,8 @@ def main():
     today = datetime.date.today()
     subprocess.run(["brctl", "download", str(VAULT)], capture_output=True)
     state = load_state()
+    if "--check-reminder" in sys.argv:
+        print(reminder_done(state)); return
     if state.get("date") == today.isoformat() and not dry:
         if "--resend" in sys.argv:  # 오늘 고른 것으로 알림만 다시
             by_id = {s[0]: s for s in sections()}
@@ -188,9 +217,10 @@ def main():
         else:
             print("already ran today")
         return
-    if not dry:
+    done = not dry and reminder_done(state)
+    if not dry and not done:
         wait_for_checks(state)
-    unread = apply_checks(state, today)
+    unread = apply_checks(state, today, done)
     secs = sections()
     chosen = pick(secs, state, unread, today)
     if dry:

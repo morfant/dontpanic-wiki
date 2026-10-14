@@ -17,7 +17,7 @@
   --no-send  노트는 쓰되 알림은 보내지 않음
   --resend   오늘 이미 실행했으면 같은 내용으로 알림만 다시 보냄
 """
-import datetime, json, pathlib, re, subprocess, sys, unicodedata, urllib.parse
+import datetime, json, pathlib, re, subprocess, sys, time, unicodedata, urllib.parse
 
 VAULT = pathlib.Path.home() / "Library/Mobile Documents/iCloud~md~obsidian/Documents/DontPanic"
 NOTES = VAULT / "수업노트"
@@ -78,6 +78,19 @@ def apply_checks(state, today):
         else:
             unread.append(sid)
     return unread
+
+
+def wait_for_checks(state, minutes=10):
+    """깬 직후엔 다른 기기에서 한 체크가 iCloud로 아직 안 넘어왔을 수 있다.
+    체크가 하나라도 보이거나 시간이 다 될 때까지 기다린다(그냥 덮어쓰면 체크가 사라진다)."""
+    for _ in range(minutes * 2):
+        if not OUT.exists() or not state.get("shown"):
+            return
+        if any(mark.strip() for mark, sid in CHECK_RE.findall(OUT.read_text(encoding="utf-8"))
+               if sid in state["shown"]):
+            return
+        time.sleep(30)
+        subprocess.run(["brctl", "download", str(VAULT)], capture_output=True)
 
 
 def links(body):
@@ -175,6 +188,8 @@ def main():
         else:
             print("already ran today")
         return
+    if not dry:
+        wait_for_checks(state)
     unread = apply_checks(state, today)
     secs = sections()
     chosen = pick(secs, state, unread, today)
